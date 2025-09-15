@@ -41,6 +41,9 @@ def get_env_var(key: str, default=None):
     """获取环境变量"""
     return os.getenv(key, default)
 
+def get_user_id():
+    config = load_config()
+    return config["user"]["userID"]
 
 # ================= Cookie 存取 =================
 def load_session_cookies():
@@ -56,6 +59,13 @@ def save_session_cookies(cookies):
     with open(SESSION_COOKIES_PATH, "wb") as f:
         pickle.dump(cookies, f)
 
+def get_session_csrftoken():
+    cookies = load_session_cookies()
+    for cookie in cookies:
+        # print(f"{cookie.name} = {cookie.value}; domain={cookie.domain}; path={cookie.path}; expires={cookie.expires}")
+        if cookie.name == "csrftoken":
+            return cookie.value
+    return None
 
 
 # =============保存相应页面=========

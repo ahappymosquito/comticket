@@ -63,8 +63,8 @@ class Element:
             # 关键：xpath() 是在 self._element 这个当前元素上调用的，
             # 而不是在整个文档的 root 上调用。
             raw_elements = self._element.xpath(xpath_query)
-            logger.info(
-                f"在 <{self._element.tag}> 元素内执行相对查询: '{xpath_query}'，找到 {len(raw_elements)} 个结果。")
+            # logger.info(
+                # f"在 <{self._element.tag}> 元素内执行相对查询: '{xpath_query}'，找到 {len(raw_elements)} 个结果。")
 
             # 同样，将返回的原始 lxml 元素包装成我们自定义的 Element 对象
             return [Element(el) for el in raw_elements if isinstance(el, etree._Element)]
