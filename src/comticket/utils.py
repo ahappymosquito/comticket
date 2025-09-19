@@ -1,3 +1,4 @@
+import json
 import os
 import tomllib  # Python 3.11+
 import pickle
@@ -5,6 +6,9 @@ from dotenv import load_dotenv
 from loguru import logger
 from datetime import datetime
 import os
+from zai import ZhipuAiClient
+import time
+
 
 
 # 工程根目录
@@ -90,3 +94,46 @@ def save_response_html(content: str, prefix: str = "response") -> str:
         filepath = ""
 
     return filepath
+
+# =========llm========
+def _init_client() -> ZhipuAiClient:
+    """实例化全局 ZhipuAiClient"""
+    config = load_config()
+    token = config.get("llm", {}).get("token")
+    if not token:
+        raise RuntimeError("缺少 [llm].token，请在 config.toml 中配置")
+
+    logger.info("初始化 ZhipuAiClient ...")
+    start = time.perf_counter()
+    client = ZhipuAiClient(api_key=token)
+    logger.success("ZhipuAiClient 初始化完成，耗时 {:.2f}s", time.perf_counter() - start)
+    return client
+
+# 全局唯一实例
+client: ZhipuAiClient = _init_client()
+
+
+
+def llm(remark, base_info):
+    start = time.perf_counter()
+    logger.info("分析 remark: {}", remark)
+
+    response = client.chat.completions.create(
+        model="glm-4.5",
+        messages=[
+            {"role": "system", "content": "你是一名网络工程师，擅长python数据处理。"},
+            {
+                "role": "user",
+                "content": f"""已知一个base_info字典：{base_info};备注内容：{remark};请你根据备注内容分析并补充/修改 base_info 的字段，缺省的字段使用字典value分号前的默认值，分号在新字段里隐藏；“JIRA工单”字段有时不会传“RPA-”前缀，遇到四位数字默认为RPA-xxxx，多个使用逗号隔开；保持字典结构，返回完整的base_info字典（只返回JSON，不要解释）。"""
+            }
+        ],
+    )
+
+    duration = time.perf_counter() - start
+    result = response.choices[0].message.content.strip()
+
+    logger.info("耗时: {:.2f}s", duration)
+    logger.info("更新后的 base_info: {}", result)
+    return result
+
+

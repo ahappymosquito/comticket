@@ -15,22 +15,26 @@ from .htmlParser import *
 
 def get_rjf_info(remark):
     base_info = {
-        "系统版本": "Windows10",
+        "系统版本": "Windows10;windows11;windows server;",
         "浏览器": "Google;IE;Firefox;Edge",
         "场景": "网银;电商;其他",
         "验证类型": "无验证;纯英数;单滑块;双滑块;文字点选;轨迹滑块;数学运算;动画英数;图片点选;其他",
         "区域": "境内;境外;其他",
         "浏览器版本": "140.0.7339.128",
         "登陆类型": "其他;网页版;UKEY版;客户端",
-        "登陆网址": "https://ebank.cdrcbank.com/corporbank/index.jsp",
-        "JIRA工单": "RPA-0001"
+        "登陆网址": "https://default.com;",
+        "JIRA工单": "RPA-0001;"
     }
 
     specific_info = {
-        "登陆地址": "",
-        "浏览器类型": "",
-        "验证码类型": "无验证",
+        "登陆地址": base_info.get("登陆网址",""),
+        "浏览器类型": base_info.get("浏览器",""),
+        "验证码类型": base_info.get("验证类型",""),
     }
+
+    base_info = llm(remark,base_info)
+    logger.debug("base_info: {}".format(base_info[7:-3]))
+    base_info = json.loads(base_info[7:-3])
 
     final_info = base_info.copy()
     final_info.update(specific_info)
@@ -148,18 +152,18 @@ def creat_components(ticket):
     # 2. 定义表单数据 (从您的示例中提取)
 
     # 默认参数
-    rjf_info = {
-        "系统版本": "Windows10",
-        "浏览器": "Google",
-        "场景": "网银",
-        "验证类型": "无验证",
-        "区域": "境内",
-        "浏览器版本": "139",
-        "登陆类型": "UKEY版",
-        "登陆网址": "https://ebank.cdrcbank.com/corporbank/index.jsp",
-        "JIRA工单": "RPA-3044"
-    }
-
+    # rjf_info = {
+    #     "系统版本": "Windows10",
+    #     "浏览器": "Google",
+    #     "场景": "网银",
+    #     "验证类型": "无验证",
+    #     "区域": "境内",
+    #     "浏览器版本": "139",
+    #     "登陆类型": "UKEY版",
+    #     "登陆网址": "https://netc1ea.igtb.bankofchina.com/igtb-ovs/#/login-page?bn=MIL&lan=c",
+    #     "JIRA工单": "RPA-3015;2655"
+    # }
+    rjf_info = ticket["rjf_info"]["component"]
     """
     <option value="" selected="">---------</option><option value="22">3.0模板电商组件</option><option value="23">3.0模板网银组件</option><option value="21">依维柯组件</option><option value="17">其他组件</option><option value="26">凯乐石</option><option value="27">厦门翔业</option><option value="25">同创伟业</option><option value="16">电商组件</option><option value="15">网银组件</option><option value="24">越秀电商组件</option>
     """
@@ -307,20 +311,21 @@ def creat_comtickets(comticket_info):
 
     # 3. 定义表单数据 (从您的示例中提取)
     # 其中的一些值可以从 comticket_info 参数动态传入
-    rjf_info = {
-        "区域": "境内",
-        "登陆地址": "",
-        "登陆类型": "UKEY版",
-        "系统版本": "Microsoft Windows 10 专业版",  # 注意："+"号在URL编码中代表空格
-        "浏览器版本": "140.0.0.0",
-        "浏览器类型": "",  #为空
-        "验证码类型": "无验证",
-        "浏览器": "Google",
-        "场景": "网银",
-        "验证类型": "无验证",
-        "登陆网址": "https://ebank.cdrcbank.com/corporbank/index.jsp",
-        "JIRA工单": "RPA-3044"
-    }
+    # rjf_info = {
+    #     "区域": "境内",
+    #     "登陆地址": "",
+    #     "登陆类型": "UKEY版",
+    #     "系统版本": "Microsoft Windows 10 专业版",  # 注意："+"号在URL编码中代表空格
+    #     "浏览器版本": "140.0.0.0",
+    #     "浏览器类型": "",  #为空
+    #     "验证码类型": "无验证",
+    #     "浏览器": "Google",
+    #     "场景": "网银",
+    #     "验证类型": "无验证",
+    #     "登陆网址": "https://netc1ea.igtb.bankofchina.com/igtb-ovs/#/login-page?bn=MIL&lan=c",
+    #     "JIRA工单": "RPA-3015;2655"
+    # }
+    rjf_info = comticket_info["rjf_info"]["comticket"]
 
     form_data = {
         'csrfmiddlewaretoken': '需要覆盖',
