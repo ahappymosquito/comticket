@@ -374,8 +374,7 @@ def creat_comtickets(comticket_info):
             logger.info(f"请求成功，服务器按预期返回302重定向。")
             logger.info(f"重定向到: {redirect_location}")
         elif response.status_code == 200:
-            logger.info("警告：服务器返回了200，检查下组件版本是否正确")
-            # logger.info("响应内容:", response.text) # 取消注释以调试
+            logger.error("警告：服务器返回了200，检查下组件版本是否正确")
         else:
             logger.info(f"请求失败，状态码: {response.status_code}")
             response.raise_for_status()  # 抛出异常

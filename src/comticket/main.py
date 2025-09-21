@@ -1,34 +1,44 @@
-"""
-1.登录拿取cookie，保存在data/
-2.使用cookie登录网站，获取用户所有待审批工单
-3.创建组件，创建审批单
-4.发送邮件到xuwc2315@fignard.com
-"""
-
+import time
+from loguru import logger
 from .get_session import get_session
-from .creat_comticket import get_user_comticket, creat_components, creat_comtickets, get_component_id
+from .creat_comticket import (
+    get_user_comticket,
+    creat_components,
+    creat_comtickets,
+)
+
+# 日志配置：每天一个文件，保留 7 天，超过自动压缩
+logger.add(
+    "logs/comticket_{time:YYYY-MM-DD}.log",
+    rotation="1 day",
+    retention="7 days",
+    compression="zip",
+    encoding="utf-8",
+    level="INFO"
+)
 
 if __name__ == '__main__':
-    session = get_session()
-    comticket_list = get_user_comticket(session)
+    while True:
+        try:
+            session = get_session()
+            comticket_list = get_user_comticket(session)
 
-    # comticket_list = [
-    #   {
-    #     'component_name': '招商永隆_明细查询组件',
-    #     'sender_user': '徐文超',
-    #     'remark': '测试，勿用',
-    #     'customer': '-',
-    #     'status': '待处理',
-    #     'target_component': '-',
-    #     'target_component_version': '-',
-    #     'change_info': '变更',
-    #     'refer_info': '-',
-    #     'more_info': '查看更多',
-    #     'create_at': '09月12日',
-    #     'create_component_url': 'http://ats.fingard.net:9561/robot/admin/app/comticket/2954/change/?source=process&redirect=%2Frobot%2Fadmin%2Fapp%2Fcomticket%2F%3Fsender_user__id__exact%3D30'
-    #   }
-    # ]
-    for ticket in comticket_list:
-        if ticket.get('target_component') == '-':
-            creat_components(ticket)
-        creat_comtickets(ticket)
+            logger.info(f"获取到 {len(comticket_list)} 条待审批工单")
+
+            for ticket in comticket_list:
+                try:
+                    if ticket.get('target_component') == '-':
+                        logger.info(f"创建组件: {ticket.get('component_name')}")
+                        creat_components(ticket)
+
+                    logger.info(f"创建审批单: {ticket.get('component_name')}")
+                    creat_comtickets(ticket)
+
+                except Exception as e:
+                    logger.exception(f"处理工单出错: {ticket.get('component_name')}")
+
+        except Exception as e:
+            logger.exception("本轮任务执行失败")
+
+        logger.info("等待 10 秒后再次执行...")
+        time.sleep(10)
