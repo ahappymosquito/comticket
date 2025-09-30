@@ -115,6 +115,23 @@ client: ZhipuAiClient = _init_client()
 
 
 def llm(remark, base_info):
+    """
+    base_info:
+            {
+                "系统版本": "Windows10",
+                "浏览器": "Google",
+                "场景": "网银",
+                "验证类型": "无验证",
+                "区域": "境内",
+                "浏览器版本": "140.0.7339.128",
+                "登陆类型": "其他",
+                "登陆网址": "https://default.com",
+                "JIRA工单": "RPA-3276"
+            }
+
+    """
+
+
     start = time.perf_counter()
     logger.info("分析 remark: {}", remark)
 
@@ -124,7 +141,12 @@ def llm(remark, base_info):
             {"role": "system", "content": "你是一名网络工程师，擅长python数据处理。"},
             {
                 "role": "user",
-                "content": f"""已知一个base_info字典：{base_info};备注内容：{remark};请你根据备注内容分析并补充/修改 base_info 的字段，缺省的字段使用字典value分号前的默认值，分号在新字段里隐藏；“JIRA工单”字段有时不会传“RPA-”前缀，遇到四位数字默认为RPA-xxxx，多个使用逗号隔开；保持字典结构，返回完整的base_info字典（只返回JSON，不要解释）。"""
+                "content": f"""已知一个字典：{base_info};备注内容：{remark};请你根据备注内容分析并补充/修改这个字典的字段，注意（场景！验证类型！区域！登录类型！浏览器版本！浏览器！系统版本！）这些字段是唯一的选项！，
+                                缺省的字段使用字典value分号前的默认值，分号在新字段里隐藏，字段值不要出现空格；“JIRA工单”字段有时不会传“RPA-”前缀，遇到四位数字默认为RPA-xxxx，
+                                多个使用逗号隔开，注意如果传入了工单号，就不需要默认的RPA-0001了；
+                                注意：以下这些字段是严格控制的，不可以自定义！(场景！验证类型！区域！登录类型！)；
+                                注意保持字典结构！返回完整的字典（只返回JSON!不要解释,不要变量名，纯文本！不要有''',不要有'json'等会干扰json解析的字符！)。
+                            """
             }
         ],
     )

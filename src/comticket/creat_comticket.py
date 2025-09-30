@@ -33,8 +33,8 @@ def get_rjf_info(remark):
     }
 
     base_info = llm(remark,base_info)
-    logger.debug("base_info: {}".format(base_info[7:-3]))
-    base_info = json.loads(base_info[7:-3])
+    logger.debug("{}".format(base_info))
+    base_info = json.loads(base_info)
 
     final_info = base_info.copy()
     final_info.update(specific_info)
@@ -257,7 +257,9 @@ def get_component_id(component_name):
         return None
     logger.info(f"响应状态码: {response.status_code}")
     if response.status_code == 200:
-        logger.debug(f"响应内容预览: {response.text[:100]}...")
+        # logger.debug(f"响应内容预览: {response.text[:100]}...")
+        logger.debug(f"创建组件成功√")
+        save_response_html(response.text,'组件')
     else:
         logger.warning(f"非 200 响应: {response.status_code}, 内容预览: {response.text[:200]}")
 
@@ -375,6 +377,7 @@ def creat_comtickets(comticket_info):
             logger.info(f"重定向到: {redirect_location}")
         elif response.status_code == 200:
             logger.error("警告：服务器返回了200，检查下组件版本是否正确")
+            save_response_html(response.text,'审批单创建失败')
         else:
             logger.info(f"请求失败，状态码: {response.status_code}")
             response.raise_for_status()  # 抛出异常

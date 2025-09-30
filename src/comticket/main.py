@@ -20,9 +20,10 @@ logger.add(
 if __name__ == '__main__':
     while True:
         try:
+            # 获取登录cookie
             session = get_session()
+            # 获取用户待审批 审批单
             comticket_list = get_user_comticket(session)
-
             logger.info(f"获取到 {len(comticket_list)} 条待审批工单")
 
             for ticket in comticket_list:
