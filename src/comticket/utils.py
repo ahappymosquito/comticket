@@ -57,7 +57,6 @@ def load_session_cookies():
             return pickle.load(f)
     return None
 
-
 def save_session_cookies(cookies):
     """保存会话 cookies"""
     with open(SESSION_COOKIES_PATH, "wb") as f:
@@ -115,20 +114,50 @@ client: ZhipuAiClient = _init_client()
 
 
 def llm(remark, base_info):
-    """
-    base_info:
-            {
-                "系统版本": "Windows10",
-                "浏览器": "Google",
-                "场景": "网银",
-                "验证类型": "无验证",
-                "区域": "境内",
-                "浏览器版本": "140.0.7339.128",
-                "登陆类型": "其他",
-                "登陆网址": "https://default.com",
-                "JIRA工单": "RPA-3276"
-            }
+    return json.dumps({
+                            "系统版本": "Windows10",
+                            "浏览器": "Google",
+                            "场景": "网银",
+                            "验证类型": "无验证",
+                            "区域": "境内",
+                            "浏览器版本": "140.0.7339.128",
+                            "登陆类型": "其他",
+                            "登陆网址": "https://default.com",
+                            "JIRA工单": "RPA-0001"
+                        }, ensure_ascii=False)
 
+    # base_info =
+    #         {
+    #             "系统版本": "Windows10",
+    #             "浏览器": "Google",
+    #             "场景": "网银",
+    #             "验证类型": "无验证",
+    #             "区域": "境内",
+    #             "浏览器版本": "140.0.7339.128",
+    #             "登陆类型": "其他",
+    #             "登陆网址": "https://default.com",
+    #             "JIRA工单": "RPA-3276"
+    #         }
+
+
+    """
+    Available options: 
+        glm-4.6, 
+        glm-4.5, 
+        glm-4.5-air, 
+        glm-4.5-x, 
+        glm-4.5-airx, 
+        glm-4.5-flash, 
+        glm-4-plus, 
+        glm-4-air-250414, 
+        glm-4-airx, 
+        glm-4-flashx, 
+        glm-4-flashx-250414, 
+        glm-z1-air, 
+        glm-z1-airx, 
+        glm-z1-flash, 
+        glm-z1-flashx 
+    
     """
 
 
@@ -159,3 +188,24 @@ def llm(remark, base_info):
     return result
 
 
+# ============ 数据处理
+def bump_version(version_num: str) -> str:
+    ver_list = version_num.split('.')
+
+    # 如果只有两段版本号，比如 "3.3"，则自动补一个 patch 段
+    if len(ver_list) == 2:
+        ver_list.append('0')
+
+    # 最后一位 +1
+    ver_list[-1] = str(int(ver_list[-1]) + 1)
+
+    # 从后往前处理进位
+    for i in range(len(ver_list) - 1, -1, -1):
+        if int(ver_list[i]) >= 10:
+            ver_list[i] = '0'
+            if i > 0:
+                ver_list[i - 1] = str(int(ver_list[i - 1]) + 1)
+            else:
+                ver_list.insert(0, '1')
+
+    return '.'.join(ver_list)

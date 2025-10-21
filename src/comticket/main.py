@@ -28,18 +28,18 @@ if __name__ == '__main__':
 
             for ticket in comticket_list:
                 try:
-                    if ticket.get('target_component') == '-':
-                        logger.info(f"创建组件: {ticket.get('component_name')}")
-                        creat_components(ticket)
+                    # if ticket.get('target_component') == '-':
+                    #     logger.info(f"创建组件: {ticket.get('component_name')}")
+                    #     creat_components(ticket)
 
-                    logger.info(f"创建审批单: {ticket.get('component_name')}")
+                    logger.info(f"开始创建审批单: {ticket.get('component_name')}")
                     creat_comtickets(ticket)
 
                 except Exception as e:
-                    logger.exception(f"处理工单出错: {ticket.get('component_name')}")
+                    logger.exception(f"处理工单出错: {ticket.get('component_name')},error{e}")
 
         except Exception as e:
-            logger.exception("本轮任务执行失败")
+            logger.exception(f"本轮任务执行失败,{e}")
 
         logger.info("等待 10 秒后再次执行...")
         time.sleep(10)

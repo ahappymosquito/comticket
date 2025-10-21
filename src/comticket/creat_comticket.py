@@ -12,7 +12,7 @@ from parsel import Selector
 from .utils import *
 from .htmlParser import *
 
-
+# 根据remark解析字段
 def get_rjf_info(remark):
     base_info = {
         "系统版本": "Windows10;windows11;windows server;",
@@ -40,7 +40,7 @@ def get_rjf_info(remark):
     final_info.update(specific_info)
     return {"component": base_info, "comticket": final_info}
 
-
+# 获取用户需要审批的审批单 [row_data,row_data,row_data]
 def get_user_comticket(session):
     config = load_config()
     base_url = config["base_url"]
@@ -131,7 +131,54 @@ def get_user_comticket(session):
     logger.info(ticket_list)
     return ticket_list
 
+
+def check_component(ticket):
+    #先检查有没有已有组件，获取版本号再+1返回
+    query_url = f'http://ats.fingard.net:9561/robot/admin/app/component/?q={ticket["component_name"]}'
+    check_headers = {
+        "Host": "ats.fingard.net:9561",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:143.0) Gecko/20100101 Firefox/143.0",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2",
+        "Accept-Encoding": "gzip, deflate",
+        "Referer": "http://ats.fingard.net:9561/robot/admin/app/component/",
+        "Connection": "keep-alive",
+        "Upgrade-Insecure-Requests": "1"
+    }
+    cookies = load_session_cookies()
+
+    try:
+        logger.info(f"正在查询 {query_url.split('?q=')[1]}")
+        response = requests.get(query_url, headers=check_headers, cookies=cookies, timeout=10)
+
+        logger.info(f"状态码: {response.status_code}")
+        if response.status_code == 200:
+            logger.success("请求成功，返回200")
+            content = response.text
+            arserp = HtmlParser(content)
+
+            if arserp.get_elements("//table[@id='result_list']//tbody/tr[1]/td[@class='field-get_cur_version']/a"):
+                # 已有组件，返回版本号+1
+                #" 3.0.2 (3个版本) "    " 3.3 (5个版本) ",
+                version_num = arserp.get_elements("//table[@id='result_list']//tbody/tr[1]/td[@class='field-get_cur_version']/a")[0].get_text()
+                version_num = version_num.strip().split(' ')[0]
+
+                #处理版本号+1
+                version_num = bump_version(version_num)
+                return version_num
+            else:
+                #创建成功，返回3.0.0
+                return creat_components(ticket)
+            # return version_num
+        else:
+            logger.warning(f"请求失败，状态码: {response.status_code}")
+    except requests.RequestException as e:
+        logger.error(f"请求异常: {e}")
+
+
+# 没有组件，创建组件
 def creat_components(ticket):
+    ## ======================================= ##
     post_url = "http://ats.fingard.net:9561/robot/admin/app/component/add/?_to_field=id&_popup=1"
 
     headers = {
@@ -148,26 +195,8 @@ def creat_components(ticket):
         'Priority': 'u=0, i',
     }
 
-
-    # 2. 定义表单数据 (从您的示例中提取)
-
-    # 默认参数
-    # rjf_info = {
-    #     "系统版本": "Windows10",
-    #     "浏览器": "Google",
-    #     "场景": "网银",
-    #     "验证类型": "无验证",
-    #     "区域": "境内",
-    #     "浏览器版本": "139",
-    #     "登陆类型": "UKEY版",
-    #     "登陆网址": "https://netc1ea.igtb.bankofchina.com/igtb-ovs/#/login-page?bn=MIL&lan=c",
-    #     "JIRA工单": "RPA-3015;2655"
-    # }
     rjf_info = ticket["rjf_info"]["component"]
-    """
-    <option value="" selected="">---------</option><option value="22">3.0模板电商组件</option><option value="23">3.0模板网银组件</option><option value="21">依维柯组件</option><option value="17">其他组件</option><option value="26">凯乐石</option><option value="27">厦门翔业</option><option value="25">同创伟业</option><option value="16">电商组件</option><option value="15">网银组件</option><option value="24">越秀电商组件</option>
-    """
-    # 基础表单数据
+
     form_data = {
         'csrfmiddlewaretoken': "cookie获取，需要覆盖",
         # 注意：这个值通常是动态的，每次会话都可能改变
@@ -190,20 +219,15 @@ def creat_components(ticket):
         '_save': '保存'
     }
 
-    # 3. 加载会话 cookies
     session_cookies = load_session_cookies()
 
-    # 4.
     com = ticket.copy()
 
-    # 创建一个新的会话
     session = requests.Session()
 
-    # 更新会话的cookies
     session.cookies.update(session_cookies)
 
     # 动态修改表单数据，例如根据url或索引更新组件名称
-    # 这里只是一个示例，您可以根据实际需求来修改
     current_form_data = form_data.copy()
     current_form_data['csrfmiddlewaretoken'] = get_session_csrftoken()
     current_form_data['name'] = com.get('component_name')
@@ -220,17 +244,19 @@ def creat_components(ticket):
         # 检查响应
         response.raise_for_status()  # 如果请求失败 (状态码不是 2xx)，则抛出异常
 
-        logger.info(f"成功为  '{com.get('component_name')}' 创建组件。")
+
         # 根据返回内容判断是否真的成功
         if "RPA组件版本管理系统" in response.text:
-            logger.info("服务器确认操作成功。")
+            logger.success(f"成功为  '{com.get('component_name')}' 创建组件。")
+            return '3.0.0'
         else:
             # 打印响应内容以便调试
-            logger.info("响应内容:", response.text)
+            logger.debug("响应内容:", response.text)
             pass
     except requests.exceptions.RequestException as e:
-        logger.info(f"为 '{com.get('component_name')}' 创建组件时发生错误: {e}")
+        logger.error(f"为 '{com.get('component_name')}' 创建组件时发生错误: {e}")
 
+# 获取组件id，审批单需要此字段
 def get_component_id(component_name):
     url = f"http://ats.fingard.net:9561/robot/admin/app/component/?q={component_name}"
     headers = {
@@ -275,24 +301,24 @@ def get_component_id(component_name):
     else:
         return None
 
+# 填写审批单
 def creat_comtickets(comticket_info):
     match = re.search(r"/comticket/(\d+)/", comticket_info['create_component_url'])
     comticket_id = match.group(1)
 
-    # 1. 构建请求URL
     base_url = f"http://ats.fingard.net:9561/robot/admin/app/comticket/{comticket_id}/change/"
-    # 查询参数
-    # redirect_path = f"/robot/admin/app/comticket/"
     redirect_path = f"/robot/admin/app/comticket/?sender_user__id__exact={get_user_id()}"
     post_url = f"{base_url}?source=process&redirect={redirect_path}"
 
     logger.info(comticket_info["refer_info"])
 
-    if comticket_info["refer_info"] !='-':
-        version = comticket_info["refer_info"]
-        target_component_version = ".".join(version.split(".")[:-1] + [str(int(version.split(".")[-1]) + 1)])
-    else:
-        target_component_version = '3.0.0'
+    # 叠加版本号
+    # if comticket_info["refer_info"] !='-':
+    #     version = comticket_info["refer_info"]
+    #     target_component_version = ".".join(version.split(".")[:-1] + [str(int(version.split(".")[-1]) + 1)])
+    # else:
+    #     target_component_version = '3.0.0'
+    target_component_version = check_component(comticket_info)
 
     # 2. 设置请求头
     headers = {
@@ -311,22 +337,7 @@ def creat_comtickets(comticket_info):
         'Cache-Control': 'no-cache',
     }
 
-    # 3. 定义表单数据 (从您的示例中提取)
-    # 其中的一些值可以从 comticket_info 参数动态传入
-    # rjf_info = {
-    #     "区域": "境内",
-    #     "登陆地址": "",
-    #     "登陆类型": "UKEY版",
-    #     "系统版本": "Microsoft Windows 10 专业版",  # 注意："+"号在URL编码中代表空格
-    #     "浏览器版本": "140.0.0.0",
-    #     "浏览器类型": "",  #为空
-    #     "验证码类型": "无验证",
-    #     "浏览器": "Google",
-    #     "场景": "网银",
-    #     "验证类型": "无验证",
-    #     "登陆网址": "https://netc1ea.igtb.bankofchina.com/igtb-ovs/#/login-page?bn=MIL&lan=c",
-    #     "JIRA工单": "RPA-3015;2655"
-    # }
+
     rjf_info = comticket_info["rjf_info"]["comticket"]
 
     form_data = {
