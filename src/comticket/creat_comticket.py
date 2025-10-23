@@ -131,9 +131,8 @@ def get_user_comticket(session):
     logger.info(ticket_list)
     return ticket_list
 
-
+#先检查有没有已有组件，获取版本号再+1返回
 def check_component(ticket):
-    #先检查有没有已有组件，获取版本号再+1返回
     query_url = f'http://ats.fingard.net:9561/robot/admin/app/component/?q={ticket["component_name"]}'
     check_headers = {
         "Host": "ats.fingard.net:9561",
@@ -174,7 +173,6 @@ def check_component(ticket):
             logger.warning(f"请求失败，状态码: {response.status_code}")
     except requests.RequestException as e:
         logger.error(f"请求异常: {e}")
-
 
 # 没有组件，创建组件
 def creat_components(ticket):
@@ -285,7 +283,7 @@ def get_component_id(component_name):
     if response.status_code == 200:
         # logger.debug(f"响应内容预览: {response.text[:100]}...")
         logger.debug(f"创建组件成功√")
-        save_response_html(response.text,'组件')
+        # save_response_html(response.text,'组件')
     else:
         logger.warning(f"非 200 响应: {response.status_code}, 内容预览: {response.text[:200]}")
 
@@ -379,13 +377,13 @@ def creat_comtickets(comticket_info):
         response = session.post(post_url, headers=headers, data=current_form_data, allow_redirects=False)
 
         # 6. 检查响应
-        logger.info(f"响应状态码: {response.status_code}")
+        # logger.info(f"响应状态码: {response.status_code}")
 
         if response.status_code == 302:
             redirect_location = response.headers.get('location')
 
-            logger.info(f"请求成功，服务器按预期返回302重定向。")
-            logger.info(f"重定向到: {redirect_location}")
+            logger.success(f"请求成功，服务器按预期返回302重定向。")
+            # logger.info(f"重定向到: {redirect_location}")
         elif response.status_code == 200:
             logger.error("警告：服务器返回了200，检查下组件版本是否正确")
             save_response_html(response.text,'审批单创建失败')

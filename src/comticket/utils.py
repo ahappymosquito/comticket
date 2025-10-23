@@ -108,11 +108,6 @@ def _init_client() -> ZhipuAiClient:
     logger.success("ZhipuAiClient 初始化完成，耗时 {:.2f}s", time.perf_counter() - start)
     return client
 
-# 全局唯一实例
-client: ZhipuAiClient = _init_client()
-
-
-
 def llm(remark, base_info):
     return json.dumps({
                             "系统版本": "Windows10",
@@ -125,7 +120,8 @@ def llm(remark, base_info):
                             "登陆网址": "https://default.com",
                             "JIRA工单": "RPA-0001"
                         }, ensure_ascii=False)
-
+    # 全局唯一实例
+    client: ZhipuAiClient = _init_client()
     # base_info =
     #         {
     #             "系统版本": "Windows10",

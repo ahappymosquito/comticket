@@ -3,7 +3,6 @@ from loguru import logger
 from .get_session import get_session
 from .creat_comticket import (
     get_user_comticket,
-    creat_components,
     creat_comtickets,
 )
 
@@ -28,10 +27,6 @@ if __name__ == '__main__':
 
             for ticket in comticket_list:
                 try:
-                    # if ticket.get('target_component') == '-':
-                    #     logger.info(f"创建组件: {ticket.get('component_name')}")
-                    #     creat_components(ticket)
-
                     logger.info(f"开始创建审批单: {ticket.get('component_name')}")
                     creat_comtickets(ticket)
 
