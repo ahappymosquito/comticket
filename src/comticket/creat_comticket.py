@@ -44,74 +44,76 @@ def get_rjf_info(remark):
 def get_user_comticket(session):
     config = load_config()
     base_url = config["base_url"]
-    user_id = config["user"]["userID"]
-    user_url = f"{base_url}/robot/admin/app/comticket/?sender_user__id__exact={user_id}"
-
-    response = session.get(user_url)
-    save_response_html(response.text)
-
-    content = response.text
-    parser = HtmlParser(content)
-
+    user_list = config["user"]["userID"]
     ticket_list = []
-    tr_list = parser.get_elements("//*[@id='result_list']//tr")
+    for user_id in user_list:
+        user_url = f"{base_url}/robot/admin/app/comticket/?sender_user__id__exact={user_id}"
 
-    # Iterate through each row, skipping the header (tr_list[0])
-    for tr in tr_list[1:]:
-        # Get the status text from the 6th cell (index 5)
-        # The XPath index is 1-based, so td[6] is the 6th td element
-        stat_element = tr.get_elements('./td[5]/span')
-        if not stat_element:
-            continue  # Skip if the status element doesn't exist
+        response = session.get(user_url)
+        # save_response_html(response.text)
 
-        stat = stat_element[0].get_text()
+        content = response.text
+        parser = HtmlParser(content)
 
-        # Process only the rows with the status '待处理'
-        if stat == '待处理':
-            # --- Extract elements using their index positions ---
 
-            # Note: The first column is a checkbox (td[1]), the second is a th.
-            # We will adjust for this structure.
+        tr_list = parser.get_elements("//*[@id='result_list']//tr")
 
-            # <th> is the 2nd child of <tr>
-            component_name = tr.get_elements('./th[1]')[0].get_text()
+        # Iterate through each row, skipping the header (tr_list[0])
+        for tr in tr_list[1:]:
+            # Get the status text from the 6th cell (index 5)
+            # The XPath index is 1-based, so td[6] is the 6th td element
+            stat_element = tr.get_elements('./td[5]/span')
+            if not stat_element:
+                continue  # Skip if the status element doesn't exist
 
-            # <td> elements start after the <th>
-            sender_user = tr.get_elements('./td[2]')[0].get_text()
-            remark = tr.get_elements('./td[3]')[0].get_text()
-            customer = tr.get_elements('./td[4]')[0].get_text()
-            # 'stat' is already extracted
-            target_component = tr.get_elements('./td[6]')[0].get_text()
-            target_component_version = tr.get_elements('./td[7]')[0].get_text()
-            change_info = tr.get_elements('./td[8]')[0].get_text().strip()  # .strip() to remove extra whitespace
-            refer_info = tr.get_elements('./td[9]/div//span')[0].get_text().strip()
-            more_info = tr.get_elements('./td[10]')[0].get_text()  # '查看更多'
-            create_at = tr.get_elements('./td[11]')[0].get_text()
-            download_and_open = tr.get_elements('./td[12]')[0].get_text().strip()
+            stat = stat_element[0].get_text()
 
-            create_ticket_url_element = tr.get_elements('./td[last()]/div/a[2]')
-            create_ticket_url = create_ticket_url_element[0].get_attribute(
-                'href') if create_ticket_url_element else ""
+            # Process only the rows with the status '待处理'
+            if stat == '待处理':
+                # --- Extract elements using their index positions ---
 
-            # --- Store the extracted data in a dictionary ---
-            row_data = {
-                'component_name': component_name,
-                'sender_user': sender_user,
-                'remark': remark,
-                'customer': customer,
-                'status': stat,
-                'target_component': target_component,
-                'target_component_version': target_component_version,
-                'change_info': change_info,
-                'refer_info': refer_info,
-                'more_info': more_info,
-                'create_at': create_at,
-                'create_component_url': create_ticket_url,
-                'rjf_info': get_rjf_info(remark)
-            }
+                # Note: The first column is a checkbox (td[1]), the second is a th.
+                # We will adjust for this structure.
 
-            # --- Append the dictionary to the list ---
-            ticket_list.append(row_data)
+                # <th> is the 2nd child of <tr>
+                component_name = tr.get_elements('./th[1]')[0].get_text()
+
+                # <td> elements start after the <th>
+                sender_user = tr.get_elements('./td[2]')[0].get_text()
+                remark = tr.get_elements('./td[3]')[0].get_text()
+                customer = tr.get_elements('./td[4]')[0].get_text()
+                # 'stat' is already extracted
+                target_component = tr.get_elements('./td[6]')[0].get_text()
+                target_component_version = tr.get_elements('./td[7]')[0].get_text()
+                change_info = tr.get_elements('./td[8]')[0].get_text().strip()  # .strip() to remove extra whitespace
+                refer_info = tr.get_elements('./td[9]/div//span')[0].get_text().strip()
+                more_info = tr.get_elements('./td[10]')[0].get_text()  # '查看更多'
+                create_at = tr.get_elements('./td[11]')[0].get_text()
+                download_and_open = tr.get_elements('./td[12]')[0].get_text().strip()
+
+                create_ticket_url_element = tr.get_elements('./td[last()]/div/a[2]')
+                create_ticket_url = create_ticket_url_element[0].get_attribute(
+                    'href') if create_ticket_url_element else ""
+
+                # --- Store the extracted data in a dictionary ---
+                row_data = {
+                    'component_name': component_name,
+                    'sender_user': sender_user,
+                    'remark': remark,
+                    'customer': customer,
+                    'status': stat,
+                    'target_component': target_component,
+                    'target_component_version': target_component_version,
+                    'change_info': change_info,
+                    'refer_info': refer_info,
+                    'more_info': more_info,
+                    'create_at': create_at,
+                    'create_component_url': create_ticket_url,
+                    'rjf_info': get_rjf_info(remark)
+                }
+
+                # --- Append the dictionary to the list ---
+                ticket_list.append(row_data)
     # [
     #   {
     #     'component_name': '招商永隆_明细查询组件',
@@ -197,12 +199,10 @@ def creat_components(ticket):
 
     form_data = {
         'csrfmiddlewaretoken': "cookie获取，需要覆盖",
-        # 注意：这个值通常是动态的，每次会话都可能改变
         '_popup': '1',
         'name': '需要覆盖',
         'desc': '需要覆盖',
         'com_group': '23',  ## 3.0网银代码
-        # requests库会自动处理带特殊字符的key编码
         'rjf§系统版本': rjf_info['系统版本'],
         'rjf§浏览器': rjf_info['浏览器'],
         'rjf§场景': rjf_info['场景'],
@@ -246,6 +246,7 @@ def creat_components(ticket):
         # 根据返回内容判断是否真的成功
         if "RPA组件版本管理系统" in response.text:
             logger.success(f"成功为  '{com.get('component_name')}' 创建组件。")
+            time.sleep(5)
             return '3.0.0'
         else:
             # 打印响应内容以便调试
