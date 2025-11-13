@@ -94,6 +94,20 @@ def save_response_html(content: str, prefix: str = "response") -> str:
 
     return filepath
 
+def send_DingTalk(msg: str, phone_number: list):
+    config = load_config()
+    base_DingTalk = config["DingTalk"]
+    bot = DingTalkBot(
+        access_token=base_DingTalk["access_token"],
+        secret=base_DingTalk["secret"]
+    )
+    bot.send_text(
+        msg=msg,
+        # at_user_ids=["3538670625-1997372447","1vb_pwihce3l92"],
+        at_mobiles=phone_number,
+        is_at_all=False
+    )
+
 # =========llm========
 def _init_client() -> ZhipuAiClient:
     """实例化全局 ZhipuAiClient"""

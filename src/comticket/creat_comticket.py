@@ -109,7 +109,8 @@ def get_user_comticket(session):
                     'more_info': more_info,
                     'create_at': create_at,
                     'create_component_url': create_ticket_url,
-                    'rjf_info': get_rjf_info(remark)
+                    'rjf_info': get_rjf_info(remark),
+                    'user_id': user_id
                 }
 
                 # --- Append the dictionary to the list ---
@@ -213,7 +214,7 @@ def creat_components(ticket):
         'rjf§登陆网址': rjf_info['登陆网址'],
         'rjf§JIRA工单': rjf_info['JIRA工单'],
         'info': json.dumps(rjf_info, ensure_ascii=False),  # 将字典转换为JSON字符串
-        'maintainer_by': get_user_id(),
+        'maintainer_by': ticket['user_id'],
         '_save': '保存'
     }
 
@@ -306,7 +307,7 @@ def creat_comtickets(comticket_info):
     comticket_id = match.group(1)
 
     base_url = f"http://ats.fingard.net:9561/robot/admin/app/comticket/{comticket_id}/change/"
-    redirect_path = f"/robot/admin/app/comticket/?sender_user__id__exact={get_user_id()}"
+    redirect_path = f"/robot/admin/app/comticket/?sender_user__id__exact={comticket_info['user_id']}"
     post_url = f"{base_url}?source=process&redirect={redirect_path}"
 
     logger.info(comticket_info["refer_info"])
@@ -382,7 +383,7 @@ def creat_comtickets(comticket_info):
 
         if response.status_code == 302:
             redirect_location = response.headers.get('location')
-
+            send_DingTalk(comticket_info["component_name"]+ " "+comticket_info["sender_user"]+"已审批！",["17538215922"])
             logger.success(f"请求成功，服务器按预期返回302重定向。")
             # logger.info(f"重定向到: {redirect_location}")
         elif response.status_code == 200:
