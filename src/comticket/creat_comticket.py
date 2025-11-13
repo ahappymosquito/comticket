@@ -383,7 +383,10 @@ def creat_comtickets(comticket_info):
 
         if response.status_code == 302:
             redirect_location = response.headers.get('location')
+
             send_DingTalk(comticket_info["component_name"]+ " "+comticket_info["sender_user"]+"已审批！",["17538215922"])
+            send_Email(['xuwc2315@fingard.com'],subject=comticket_info["component_name"]+ " "+comticket_info["sender_user"]+"已审批！",body=redirect_location)
+
             logger.success(f"请求成功，服务器按预期返回302重定向。")
             # logger.info(f"重定向到: {redirect_location}")
         elif response.status_code == 200:

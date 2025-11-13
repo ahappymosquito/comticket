@@ -9,6 +9,8 @@ import os
 from zai import ZhipuAiClient
 import time
 
+from .Msg_DingTalk import DingTalkBot
+from .Msg_Email import MailClient
 
 
 # 工程根目录
@@ -107,6 +109,25 @@ def send_DingTalk(msg: str, phone_number: list):
         at_mobiles=phone_number,
         is_at_all=False
     )
+
+def send_Email(to: list, subject:str ,body:str,html = '' ,sender_name="徐文超"):
+    config = load_config()
+    smtp = config["smtp"]
+    client = MailClient(
+        smtp_server=smtp["server"],
+        port=smtp["port"],
+        sender_email=smtp["sender"],
+        password=smtp["pwd"],
+        sender_name=sender_name,
+    )
+
+    client.send_mail(
+        to=to,
+        subject=subject,
+        body=body,
+        html=html,
+    )
+
 
 # =========llm========
 def _init_client() -> ZhipuAiClient:
