@@ -3,7 +3,7 @@ name = "comticket"
 version = "0.1.0"
 description = ""
 authors = [
-    {name = "Your Name",email = "you@example.com"}
+    {name = "xuwc2315",email = "xuwc2315@fignard.com"}
 ]
 readme = "README.md"
 requires-python = ">=3.12,<4.0"

@@ -128,7 +128,7 @@ class HtmlParser:
         try:
             # 使用 root 对象执行 xpath 查询，返回原始 lxml 元素列表
             raw_elements = self.root.xpath(xpath_query)
-            logger.info(f"执行 XPath 查询: '{xpath_query}'，找到 {len(raw_elements)} 个元素。")
+            # logger.info(f"执行 XPath 查询: '{xpath_query}'，找到 {len(raw_elements)} 个元素。")
 
             # [核心] 列表推导式：将每个原始 lxml 元素包装成我们自定义的 Element 对象
             return [Element(el) for el in raw_elements if isinstance(el, etree._Element)]

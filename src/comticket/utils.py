@@ -8,13 +8,16 @@ from datetime import datetime
 import os
 from zai import ZhipuAiClient
 import time
+from pathlib import Path
+
 
 from .Msg_DingTalk import DingTalkBot
 from .Msg_Email import MailClient
 
 
 # 工程根目录
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+BASE_DIR = Path(__file__).resolve().parents[2]
 
 # 配置文件
 CONFIG_PATH = os.path.join(BASE_DIR, "config.toml")
@@ -96,7 +99,7 @@ def save_response_html(content: str, prefix: str = "response") -> str:
 
     return filepath
 
-def send_DingTalk(msg: str, phone_number: list):
+def send_DingTalk(msg: str, phone_number=[],is_at_all=False):
     config = load_config()
     base_DingTalk = config["DingTalk"]
     bot = DingTalkBot(
@@ -107,7 +110,7 @@ def send_DingTalk(msg: str, phone_number: list):
         msg=msg,
         # at_user_ids=["3538670625-1997372447","1vb_pwihce3l92"],
         at_mobiles=phone_number,
-        is_at_all=False
+        is_at_all=is_at_all
     )
 
 def send_Email(to: list, subject:str ,body:str,html = '' ,sender_name="徐文超"):
