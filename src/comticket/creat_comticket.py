@@ -247,7 +247,7 @@ def creat_components(ticket):
         # 根据返回内容判断是否真的成功
         if "RPA组件版本管理系统" in response.text:
             logger.success(f"成功为  '{com.get('component_name')}' 创建组件。")
-            time.sleep(5)
+            # time.sleep(5)
             return '3.0.0'
         else:
             # 打印响应内容以便调试
