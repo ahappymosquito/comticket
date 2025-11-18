@@ -26,6 +26,9 @@ if __name__ == '__main__':
         send_DingTalk(
             f"当前版本：{current_version[0]}{current_version[1]}\n注意：{current_version[2]}\n{current_version[3]}于{current_version[4]}上传更新\n",
             is_at_all='True')
+        send_Group_DingTalk(
+            f"当前版本：{current_version[0]}{current_version[1]}\n注意：{current_version[2]}\n{current_version[3]}于{current_version[4]}上传更新\n",
+            is_at_all='False')
 
     while True:
         try:
@@ -53,12 +56,13 @@ if __name__ == '__main__':
         try:
             logger.info(f"初始模板版本: {version_list}")
             current_version_list = check_component_update(check_list)
-            if current_version_list:
+            if len(current_version_list) == len(version_list):
                 for version,current_version in zip(version_list,current_version_list):
 
                     if version != current_version:
                         # component_name, version, mark, name, date
                         logger.info(f"模板已更新: {current_version[0]}")
+                        send_Group_DingTalk(f"{current_version[0]}{current_version[1]}已更新!\n注意：{current_version[2]}\n {current_version[3]}于{current_version[4]}上传更新",is_at_all='False')
 
                         send_DingTalk(f"{current_version[0]}{current_version[1]}已更新!\n注意：{current_version[2]}\n {current_version[3]}于{current_version[4]}上传更新",is_at_all='True')
                         send_Email(['xuwc2315@fingard.com'],

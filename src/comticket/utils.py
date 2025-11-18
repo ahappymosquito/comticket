@@ -113,6 +113,20 @@ def send_DingTalk(msg: str, phone_number=[],is_at_all=False):
         is_at_all=is_at_all
     )
 
+def send_Group_DingTalk(msg: str, phone_number=[],is_at_all=False):
+    config = load_config()
+    base_DingTalk = config["send_group"]
+    bot = DingTalkBot(
+        access_token=base_DingTalk["access_token"],
+        secret=base_DingTalk["secret"]
+    )
+    bot.send_text(
+        msg=msg,
+        # at_user_ids=["3538670625-1997372447","1vb_pwihce3l92"],
+        at_mobiles=phone_number,
+        is_at_all=is_at_all
+    )
+
 def send_Email(to: list, subject:str ,body:str,html = '' ,sender_name="徐文超"):
     config = load_config()
     smtp = config["smtp"]

@@ -54,11 +54,11 @@ def check_component_update(component_name_list):
                 logger.warning(f"请求失败，状态码: {response.status_code}")
         except requests.RequestException as e:
             logger.error(f"请求异常: {e}")
-            return None
+            return return_list
     return return_list
 
 
 if __name__ == '__main__':
-    check_component_update("网银查询业务组件模板")
-    check_component_update("网银客户端登录组件模板")
-    check_component_update("网银浏览器登录组件模板")
+    check_component_update(["网银查询业务组件模板"])
+    # check_component_update("网银客户端登录组件模板")
+    # check_component_update("网银浏览器登录组件模板")
