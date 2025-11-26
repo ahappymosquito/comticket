@@ -2,10 +2,9 @@
 1.登录拿取cookie，保存在data/
 """
 
-from loguru import logger
 import requests
 from bs4 import BeautifulSoup
-from .utils import *
+from src.comticket.utils import *
 
 def get_session():
     """
@@ -30,7 +29,8 @@ def get_session():
 
     # 检查 cookies 是否有效
     resp = session.get(next_url, allow_redirects=False)
-    if resp.status_code == 200:
+    # save_response_html(resp.text, prefix="aaa")
+    if resp.status_code == 200 and '待处理' in resp.text:
         logger.success("已登录，无需再次登录")
         return session
 
@@ -66,3 +66,11 @@ def get_session():
         raise RuntimeError("登录失败")
 
     return session
+
+if __name__ == "__main__":
+    session1 = get_session()
+    resp = session1.get(
+        'http://ats.fingard.net:9561/robot/admin/app/component/add/?_to_field=id&_popup=1'
+    )
+    logger.debug(resp.text)
+    logger.debug(session1.cookies)

@@ -10,7 +10,7 @@ from zai import ZhipuAiClient
 import time
 from pathlib import Path
 
-
+from .sqlite import *
 from .Msg_DingTalk import DingTalkBot
 from .Msg_Email import MailClient
 
@@ -31,6 +31,11 @@ SESSION_COOKIES_PATH = os.path.join(DATA_DIR, "session_cookies.pkl")
 # 确保 data 目录存在
 os.makedirs(DATA_DIR, exist_ok=True)
 os.makedirs(DATA_RESPONSE_DIR, exist_ok=True)
+
+def get_db():
+    db = SQLiteDB(db_name="info_monitor.db", data_dir=DATA_DIR)
+    init_table(db)
+    return db
 
 
 # ================= 配置相关 =================
