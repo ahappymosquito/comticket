@@ -319,6 +319,8 @@ def creat_comtickets(comticket_info):
     # else:
     #     target_component_version = '3.0.0'
     target_component_version = check_component(comticket_info)
+    if target_component_version =='3.0.0':
+        return True
 
     # 2. 设置请求头
     headers = {
@@ -396,6 +398,7 @@ def creat_comtickets(comticket_info):
             logger.info(f"请求失败，状态码: {response.status_code}")
 
             save_response_html(response.text, f'{response.status_code}审批单创建失败')
+            send_DingTalk(f'{current_form_data['target_component']} 审批单创建失败,状态码{response.status_code}',is_at_all=True)
             response.raise_for_status()  # 抛出异常
 
     except requests.exceptions.RequestException as e:
