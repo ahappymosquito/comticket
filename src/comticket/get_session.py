@@ -28,7 +28,7 @@ def get_session():
         logger.success("已加载上次登录的 cookies")
 
     # 检查 cookies 是否有效
-    resp = session.get(next_url, allow_redirects=False)
+    resp = session.get(next_url, allow_redirects=False, timeout=10)
     # save_response_html(resp.text, prefix="aaa")
     if resp.status_code == 200 and '待处理' in resp.text:
         logger.success("已登录，无需再次登录")
@@ -38,7 +38,7 @@ def get_session():
     logger.warning("需要登录，开始登录流程...")
 
     # 获取 CSRF token
-    resp = session.get(login_url)
+    resp = session.get(login_url, timeout=10)
     soup = BeautifulSoup(resp.text, "html.parser")
     csrf_input = soup.find("input", {"name": "csrfmiddlewaretoken"})
     if not csrf_input:
@@ -57,7 +57,7 @@ def get_session():
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
     }
 
-    login_resp = session.post(login_url, data=payload, headers=headers, allow_redirects=False)
+    login_resp = session.post(login_url, data=payload, headers=headers, allow_redirects=False, timeout=10)
     if "sessionid" in session.cookies:
         logger.success("登录成功，已保存 cookies")
         save_session_cookies(session.cookies)

@@ -49,7 +49,7 @@ def get_user_comticket(session):
     for user_id in user_list:
         user_url = f"{base_url}/robot/admin/app/comticket/?sender_user__id__exact={user_id}"
 
-        response = session.get(user_url)
+        response = session.get(user_url, timeout=10)
         # save_response_html(response.text)
 
         content = response.text
@@ -238,7 +238,7 @@ def creat_components(ticket):
         logger.info(f"正在为 '{com.get('component_name')}' 创建组件: {current_form_data['name']}...")
 
         # 发送POST请求
-        response = session.post(post_url, headers=headers, data=current_form_data)
+        response = session.post(post_url, headers=headers, data=current_form_data, timeout=10)
 
         # 检查响应
         response.raise_for_status()  # 如果请求失败 (状态码不是 2xx)，则抛出异常
@@ -376,7 +376,7 @@ def creat_comtickets(comticket_info):
         logger.info(f"正在更新 Comticket ID: {comticket_id}...")
 
         # 发送POST请求，allow_redirects=False 以捕获302响应
-        response = session.post(post_url, headers=headers, data=current_form_data, allow_redirects=False)
+        response = session.post(post_url, headers=headers, data=current_form_data, allow_redirects=False, timeout=10)
 
         # 6. 检查响应
         # logger.info(f"响应状态码: {response.status_code}")
@@ -394,6 +394,8 @@ def creat_comtickets(comticket_info):
             save_response_html(response.text,'审批单创建失败')
         else:
             logger.info(f"请求失败，状态码: {response.status_code}")
+
+            save_response_html(response.text, f'{response.status_code}审批单创建失败')
             response.raise_for_status()  # 抛出异常
 
     except requests.exceptions.RequestException as e:
