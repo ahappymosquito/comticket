@@ -1,9 +1,9 @@
 [project]
 name = "comticket"
-version = "0.1.0"
-description = ""
+version = "0.2.0"
+description = "Automate component approval, version monitoring, and notifications for an internal RPA platform."
 authors = [
-    {name = "xuwc2315",email = "xuwc2315@fignard.com"}
+    {name = "comticket contributors"}
 ]
 readme = "README.md"
 requires-python = ">=3.12,<4.0"

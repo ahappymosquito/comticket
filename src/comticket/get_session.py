@@ -70,7 +70,7 @@ def get_session():
 if __name__ == "__main__":
     session1 = get_session()
     resp = session1.get(
-        'http://ats.fingard.net:9561/robot/admin/app/component/add/?_to_field=id&_popup=1'
+        f'{load_config()["base_url"].rstrip("/")}/robot/admin/app/component/add/?_to_field=id&_popup=1'
     )
     logger.debug(resp.text)
     logger.debug(session1.cookies)

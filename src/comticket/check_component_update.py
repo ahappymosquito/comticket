@@ -18,12 +18,11 @@ def check_component_update(component_name_list):
         base_url = load_config()["base_url"]
         query_url = f'{base_url}/robot/admin/app/componentversion/?main_component__name={component_name}'
         headers = {
-            "Host": "ats.fingard.net:9561",
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:143.0) Gecko/20100101 Firefox/143.0",
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
             "Accept-Language": "zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2",
             "Accept-Encoding": "gzip, deflate",
-            "Referer": "http://ats.fingard.net:9561/robot/admin/app/component/",
+            "Referer": f"{base_url.rstrip('/')}/robot/admin/app/component/",
             "Connection": "keep-alive",
             "Upgrade-Insecure-Requests": "1"
         }

@@ -1,11 +1,11 @@
+"""职责：集中管理配置、运行态数据、通知适配器和版本工具。"""
+
 import json
 import os
 import tomllib  # Python 3.11+
 import pickle
-from dotenv import load_dotenv
 from loguru import logger
 from datetime import datetime
-import os
 from zai import ZhipuAiClient
 import time
 from pathlib import Path
@@ -13,6 +13,7 @@ from pathlib import Path
 from .sqlite import *
 from .Msg_DingTalk import DingTalkBot
 from .Msg_Email import MailClient
+from .versioning import bump_version
 
 
 # 工程根目录
@@ -21,7 +22,6 @@ BASE_DIR = Path(__file__).resolve().parents[2]
 
 # 配置文件
 CONFIG_PATH = os.path.join(BASE_DIR, "config.toml")
-ENV_PATH = os.path.join(BASE_DIR, ".env")
 
 # 数据文件目录
 DATA_DIR = os.path.join(BASE_DIR, "data")
@@ -44,11 +44,6 @@ def load_config():
     with open(CONFIG_PATH, "rb") as f:
         return tomllib.load(f)
 
-
-def load_env():
-    """加载 .env"""
-    if os.path.exists(ENV_PATH):
-        load_dotenv(ENV_PATH)
 
 # 不存在返回None
 def get_env_var(key: str, default=None):
@@ -239,26 +234,3 @@ def llm(remark, base_info):
     logger.info("耗时: {:.2f}s", duration)
     logger.info("更新后的 base_info: {}", result)
     return result
-
-
-# ============ 数据处理
-def bump_version(version_num: str) -> str:
-    ver_list = version_num.split('.')
-
-    # 如果只有两段版本号，比如 "3.3"，则自动补一个 patch 段
-    if len(ver_list) == 2:
-        ver_list.append('0')
-
-    # 最后一位 +1
-    ver_list[-1] = str(int(ver_list[-1]) + 1)
-
-    # 从后往前处理进位
-    for i in range(len(ver_list) - 1, -1, -1):
-        if int(ver_list[i]) >= 10:
-            ver_list[i] = '0'
-            if i > 0:
-                ver_list[i - 1] = str(int(ver_list[i - 1]) + 1)
-            else:
-                ver_list.insert(0, '1')
-
-    return '.'.join(ver_list)

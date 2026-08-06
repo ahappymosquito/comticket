@@ -1,85 +1,95 @@
-from loguru import logger
-import smtplib, ssl, os
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from email.mime.base import MIMEBase
+"""职责：提供无副作用的 SMTP 邮件客户端封装。"""
+
 from email import encoders
 from email.header import Header
+from email.mime.base import MIMEBase
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from email.utils import formataddr
+import os
+import smtplib
+import ssl
+
+from loguru import logger
+
 
 class MailClient:
-    """SMTP邮件发送封装，支持UTF-8标题/姓名自动编码"""
+    """发送支持 UTF-8 标题、正文和附件的 SMTP 邮件。"""
 
-    def __init__(self, smtp_server: str, port: int, sender_email: str, password: str, sender_name: str = None):
+    def __init__(
+        self,
+        smtp_server: str,
+        port: int,
+        sender_email: str,
+        password: str,
+        sender_name: str | None = None,
+    ) -> None:
         self.smtp_server = smtp_server
         self.port = port
         self.sender_email = sender_email
         self.password = password
         self.sender_name = sender_name or sender_email
 
-    def _encode_header(self, text: str) -> str:
-        """自动UTF-8安全编码（支持中日韩字符）"""
+    @staticmethod
+    def _encode_header(text: str) -> str:
+        """将邮件标题编码为 RFC 兼容的 UTF-8 字符串。"""
         return str(Header(text, "utf-8"))
 
-    def _encode_addr(self, name: str, email: str) -> str:
-        """带姓名的邮箱格式编码"""
+    @staticmethod
+    def _encode_addr(name: str, email: str) -> str:
+        """编码带显示名称的邮箱地址。"""
         return formataddr((str(Header(name, "utf-8")), email))
 
     def send_mail(
         self,
-        to: list | str,
+        to: list[str] | str,
         subject: str,
         body: str = "",
-        html: str = None,
-        cc: list | None = None,
-        bcc: list | None = None,
-        attachments: list | None = None,
-    ):
+        html: str | None = None,
+        cc: list[str] | None = None,
+        bcc: list[str] | None = None,
+        attachments: list[str] | None = None,
+    ) -> None:
+        """发送邮件；附件路径不存在时跳过该附件并记录警告。"""
+        recipients = [to] if isinstance(to, str) else list(to)
+        cc = cc or []
+        bcc = bcc or []
+        attachments = attachments or []
+
+        message = MIMEMultipart("mixed")
+        message["From"] = self._encode_addr(self.sender_name, self.sender_email)
+        message["To"] = ", ".join(self._encode_addr("", address) for address in recipients)
+        if cc:
+            message["Cc"] = ", ".join(self._encode_addr("", address) for address in cc)
+        message["Subject"] = self._encode_header(subject)
+
+        alternatives = MIMEMultipart("alternative")
+        if body:
+            alternatives.attach(MIMEText(body, "plain", "utf-8"))
+        if html:
+            alternatives.attach(MIMEText(html, "html", "utf-8"))
+        message.attach(alternatives)
+
+        for file_path in attachments:
+            if not os.path.exists(file_path):
+                logger.warning("附件不存在: {}", file_path)
+                continue
+            with open(file_path, "rb") as file:
+                part = MIMEBase("application", "octet-stream")
+                part.set_payload(file.read())
+            encoders.encode_base64(part)
+            part.add_header(
+                "Content-Disposition",
+                f'attachment; filename="{os.path.basename(file_path)}"',
+            )
+            message.attach(part)
+
+        all_recipients = recipients + cc + bcc
         try:
-            if isinstance(to, str):
-                to = [to]
-            cc = cc or []
-            bcc = bcc or []
-            attachments = attachments or []
-
-            # --- 构建邮件 ---
-            msg = MIMEMultipart("mixed")
-            msg["From"] = self._encode_addr(self.sender_name, self.sender_email)
-            msg["To"] = ", ".join([self._encode_addr("", x) for x in to])
-            if cc:
-                msg["Cc"] = ", ".join([self._encode_addr("", x) for x in cc])
-            msg["Subject"] = self._encode_header(subject)
-
-            # --- 正文部分 ---
-            alt = MIMEMultipart("alternative")
-            if body:
-                alt.attach(MIMEText(body, "plain", "utf-8"))
-            if html:
-                alt.attach(MIMEText(html, "html", "utf-8"))
-            msg.attach(alt)
-
-            # --- 附件部分 ---
-            for file_path in attachments:
-                if not os.path.exists(file_path):
-                    logger.warning(f"附件不存在: {file_path}")
-                    continue
-                with open(file_path, "rb") as f:
-                    part = MIMEBase("application", "octet-stream")
-                    part.set_payload(f.read())
-                    encoders.encode_base64(part)
-                    part.add_header(
-                        "Content-Disposition",
-                        f'attachment; filename="{os.path.basename(file_path)}"',
-                    )
-                    msg.attach(part)
-
-            all_recipients = to + cc + bcc
             context = ssl.create_default_context()
             with smtplib.SMTP_SSL(self.smtp_server, self.port, context=context) as server:
                 server.login(self.sender_email, self.password)
-                server.sendmail(self.sender_email, all_recipients, msg.as_string())
-
-            logger.success(f"✅ 邮件已发送 -> {', '.join(all_recipients)}")
-
-        except Exception as e:
-            logger.error(f"❌ 邮件发送失败: {e}")
+                server.sendmail(self.sender_email, all_recipients, message.as_string())
+            logger.success("邮件已发送 -> {}", ", ".join(all_recipients))
+        except Exception as exc:
+            logger.error("邮件发送失败: {}", exc)

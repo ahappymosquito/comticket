@@ -1,72 +1,68 @@
-from loguru import logger
-import time
-import hmac
-import hashlib
+"""职责：封装带签名的钉钉机器人文本消息发送能力。"""
+
 import base64
+import hashlib
+import hmac
+import time
 import urllib.parse
+
 import requests
+from loguru import logger
+
 
 class DingTalkBot:
-    """
-    钉钉自定义机器人封装类
-    https://open.dingtalk.com/document/orgapp/obtain-the-webhook-address-of-a-custom-robot
-    """
+    """钉钉自定义机器人客户端。"""
 
-    def __init__(self, access_token: str, secret: str):
-        """
-        初始化机器人实例
-        :param access_token: 机器人 webhook 的 access_token
-        :param secret: 机器人安全设置中的 secret
-        """
+    def __init__(self, access_token: str, secret: str) -> None:
         self.access_token = access_token
         self.secret = secret
 
     def _generate_sign(self) -> tuple[str, str]:
-        """生成签名与时间戳"""
+        """生成钉钉机器人需要的时间戳和签名。"""
         timestamp = str(round(time.time() * 1000))
-        string_to_sign = f'{timestamp}\n{self.secret}'
-        hmac_code = hmac.new(self.secret.encode('utf-8'),
-                             string_to_sign.encode('utf-8'),
-                             digestmod=hashlib.sha256).digest()
-        sign = urllib.parse.quote_plus(base64.b64encode(hmac_code))
+        string_to_sign = f"{timestamp}\n{self.secret}"
+        digest = hmac.new(
+            self.secret.encode("utf-8"),
+            string_to_sign.encode("utf-8"),
+            digestmod=hashlib.sha256,
+        ).digest()
+        sign = urllib.parse.quote_plus(base64.b64encode(digest))
         return timestamp, sign
 
-    def send_text(self, msg: str,
-                  at_user_ids: list[str] | None = None,
-                  at_mobiles: list[str] | None = None,
-                  is_at_all: bool = False) -> dict:
-        """
-        发送文本消息到钉钉群
-        :param msg: 消息内容
-        :param at_user_ids: @ 的用户ID列表
-        :param at_mobiles: @ 的手机号列表
-        :param is_at_all: 是否 @ 所有人
-        :return: 钉钉 API 响应
-        """
+    def send_text(
+        self,
+        msg: str,
+        at_user_ids: list[str] | None = None,
+        at_mobiles: list[str] | None = None,
+        is_at_all: bool = False,
+    ) -> dict:
+        """发送文本消息；失败时返回统一的错误字典。"""
         timestamp, sign = self._generate_sign()
         url = (
-            f'https://oapi.dingtalk.com/robot/send'
-            f'?access_token={self.access_token}&timestamp={timestamp}&sign={sign}'
+            "https://oapi.dingtalk.com/robot/send"
+            f"?access_token={self.access_token}&timestamp={timestamp}&sign={sign}"
         )
-
         payload = {
             "msgtype": "text",
             "text": {"content": msg},
             "at": {
                 "isAtAll": is_at_all,
                 "atUserIds": at_user_ids or [],
-                "atMobiles": at_mobiles or []
-            }
+                "atMobiles": at_mobiles or [],
+            },
         }
 
-        headers = {'Content-Type': 'application/json'}
         try:
-            resp = requests.post(url, json=payload, headers=headers, timeout=10)
-            resp.raise_for_status()
-            data = resp.json()
-            logger.info(f"钉钉消息发送成功：{data}")
+            response = requests.post(
+                url,
+                json=payload,
+                headers={"Content-Type": "application/json"},
+                timeout=10,
+            )
+            response.raise_for_status()
+            data = response.json()
+            logger.info("钉钉消息发送成功: {}", data)
             return data
-        except requests.RequestException as e:
-            logger.error(f"钉钉消息发送失败：{e}")
-            return {"errcode": -1, "errmsg": str(e)}
-
+        except requests.RequestException as exc:
+            logger.error("钉钉消息发送失败: {}", exc)
+            return {"errcode": -1, "errmsg": str(exc)}

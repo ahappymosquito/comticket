@@ -136,14 +136,14 @@ def get_user_comticket(session):
 
 #先检查有没有已有组件，获取版本号再+1返回
 def check_component(ticket):
-    query_url = f'http://ats.fingard.net:9561/robot/admin/app/component/?q={ticket["component_name"]}'
+    base_url = load_config()["base_url"].rstrip("/")
+    query_url = f'{base_url}/robot/admin/app/component/?q={ticket["component_name"]}'
     check_headers = {
-        "Host": "ats.fingard.net:9561",
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:143.0) Gecko/20100101 Firefox/143.0",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
         "Accept-Language": "zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2",
         "Accept-Encoding": "gzip, deflate",
-        "Referer": "http://ats.fingard.net:9561/robot/admin/app/component/",
+        "Referer": f"{base_url}/robot/admin/app/component/",
         "Connection": "keep-alive",
         "Upgrade-Insecure-Requests": "1"
     }
@@ -180,17 +180,17 @@ def check_component(ticket):
 # 没有组件，创建组件
 def creat_components(ticket):
     ## ======================================= ##
-    post_url = "http://ats.fingard.net:9561/robot/admin/app/component/add/?_to_field=id&_popup=1"
+    base_url = load_config()["base_url"].rstrip("/")
+    post_url = f"{base_url}/robot/admin/app/component/add/?_to_field=id&_popup=1"
 
     headers = {
-        'Host': 'ats.fingard.net:9561',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:142.0) Gecko/20100101 Firefox/142.0',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         'Accept-Language': 'zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2',
         'Accept-Encoding': 'gzip, deflate',
-        'Referer': 'http://ats.fingard.net:9561/robot/admin/app/component/add/?_to_field=id&_popup=1',
+        'Referer': post_url,
         'Content-Type': 'application/x-www-form-urlencoded',
-        'Origin': 'http://ats.fingard.net:9561',
+        'Origin': base_url,
         'Connection': 'keep-alive',
         'Upgrade-Insecure-Requests': '1',
         'Priority': 'u=0, i',
@@ -258,9 +258,9 @@ def creat_components(ticket):
 
 # 获取组件id，审批单需要此字段
 def get_component_id(component_name):
-    url = f"http://ats.fingard.net:9561/robot/admin/app/component/?q={component_name}"
+    base_url = load_config()["base_url"].rstrip("/")
+    url = f"{base_url}/robot/admin/app/component/?q={component_name}"
     headers = {
-        "Host": "ats.fingard.net:9561",
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:142.0) Gecko/20100101 Firefox/142.0",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
         "Accept-Language": "zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2",
@@ -306,7 +306,8 @@ def creat_comtickets(comticket_info):
     match = re.search(r"/comticket/(\d+)/", comticket_info['create_component_url'])
     comticket_id = match.group(1)
 
-    base_url = f"http://ats.fingard.net:9561/robot/admin/app/comticket/{comticket_id}/change/"
+    base_url = load_config()["base_url"].rstrip("/")
+    base_url = f"{base_url}/robot/admin/app/comticket/{comticket_id}/change/"
     redirect_path = f"/robot/admin/app/comticket/?sender_user__id__exact={comticket_info['user_id']}"
     post_url = f"{base_url}?source=process&redirect={redirect_path}"
 
@@ -324,13 +325,12 @@ def creat_comtickets(comticket_info):
 
     # 2. 设置请求头
     headers = {
-        'Host': 'ats.fingard.net:9561',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:142.0) Gecko/20100101 Firefox/142.0',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         'Accept-Language': 'zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2',
         'Accept-Encoding': 'gzip, deflate',
         'Referer': post_url,  # Referer 通常与请求的URL相同
-        'Origin': 'http://ats.fingard.net:9561',
+        'Origin': load_config()["base_url"].rstrip("/"),
         'Connection': 'keep-alive',
         'Upgrade-Insecure-Requests': '1',
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -386,8 +386,12 @@ def creat_comtickets(comticket_info):
         if response.status_code == 302:
             redirect_location = response.headers.get('location')
 
-            send_DingTalk(comticket_info["component_name"]+ " "+comticket_info["sender_user"]+"已审批！",["17538215922"])
-            send_Email(['xuwc2315@fingard.com'],subject=comticket_info["component_name"]+ " "+comticket_info["sender_user"]+"已审批！",body=redirect_location)
+            notification_config = load_config().get("notifications", {})
+            message = comticket_info["component_name"] + " " + comticket_info["sender_user"] + "已审批！"
+            send_DingTalk(message, notification_config.get("approval_at_mobiles", []))
+            recipients = notification_config.get("approval_email_recipients", [])
+            if recipients:
+                send_Email(recipients, subject=message, body=redirect_location or "")
 
             logger.success(f"请求成功，服务器按预期返回302重定向。")
             # logger.info(f"重定向到: {redirect_location}")

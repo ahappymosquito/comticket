@@ -1,4 +1,34 @@
-data/response
-data/response_back
+# Local configuration and credentials
+.env
+config.toml
 
-logs/*
+# Runtime state and generated data
+data/*.db
+data/*.pkl
+data/response/
+data/response_back/
+logs/
+nohup.out
+
+# Python caches and build output
+.venv/
+.pytest_cache/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+*.spec
+
+# Generated component payloads
+src/upload_component/body.txt
+src/upload_component/component.zip
+
+# IDE and OS files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Unrelated Node tooling accidentally created in this Python project
+package-lock.json

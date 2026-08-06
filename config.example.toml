@@ -1,0 +1,28 @@
+base_url = "https://your-rpa-host.example.com"
+check_keyword = ""
+
+[user]
+username = "your-username"
+password = "change-me"
+userID = [1]
+
+[llm]
+token = "replace-with-zhipu-api-key"
+
+[smtp]
+server = "smtp.example.com"
+port = 465
+sender = "bot@example.com"
+pwd = "replace-with-smtp-password"
+
+[DingTalk]
+access_token = "replace-with-dingtalk-access-token"
+secret = "replace-with-dingtalk-secret"
+
+[send_group]
+access_token = "replace-with-group-access-token"
+secret = "replace-with-group-secret"
+
+[notifications]
+approval_email_recipients = ["owner@example.com"]
+approval_at_mobiles = []
