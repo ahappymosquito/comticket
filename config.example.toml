@@ -6,7 +6,21 @@ username = "your-username"
 password = "change-me"
 userID = [1]
 
+[component]
+tag_id = "5"                 # 3.0模板网银组件
+default_maintainer_id = "30" # 开发人 / 负责人（徐文超）
+default_version = "3.0.0"
+approve_status = "31"        # 批准；32=驳回
+
+[component.default_info]
+系统版本 = "Microsoft Windows Server 2019 Standard"
+浏览器 = "Google"
+场景 = "网银"
+验证类型 = "无验证"
+区域 = "其他"
+
 [llm]
+enabled = false
 token = "replace-with-zhipu-api-key"
 
 [smtp]

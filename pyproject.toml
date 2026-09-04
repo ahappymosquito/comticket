@@ -1,6 +1,6 @@
 [project]
 name = "comticket"
-version = "0.2.0"
+version = "0.3.0"
 description = "Automate component approval, version monitoring, and notifications for an internal RPA platform."
 authors = [
     {name = "comticket contributors"}
@@ -19,6 +19,10 @@ dependencies = [
 
 [tool.poetry]
 packages = [{include = "comticket", from = "src"}]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
 
 
 [build-system]
