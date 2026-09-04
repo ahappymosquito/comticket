@@ -6,7 +6,6 @@ import tomllib  # Python 3.11+
 import pickle
 from loguru import logger
 from datetime import datetime
-from zai import ZhipuAiClient
 import time
 from pathlib import Path
 
@@ -147,8 +146,13 @@ def send_Email(to: list, subject:str ,body:str,html = '' ,sender_name="徐文超
 
 
 # =========llm========
-def _init_client() -> ZhipuAiClient:
-    """实例化全局 ZhipuAiClient"""
+def _init_client():
+    """实例化 ZhipuAiClient。仅在 [llm].enabled=true 时调用。"""
+    try:
+        from zai import ZhipuAiClient
+    except ImportError as exc:
+        raise RuntimeError("启用 LLM 需要安装 zai-sdk") from exc
+
     config = load_config()
     token = config.get("llm", {}).get("token")
     if not token:
@@ -160,20 +164,30 @@ def _init_client() -> ZhipuAiClient:
     logger.success("ZhipuAiClient 初始化完成，耗时 {:.2f}s", time.perf_counter() - start)
     return client
 
+def _llm_enabled() -> bool:
+    return bool(load_config().get("llm", {}).get("enabled"))
+
+
 def llm(remark, base_info):
-    return json.dumps({
-                            "系统版本": "Windows10",
-                            "浏览器": "Google",
-                            "场景": "网银",
-                            "验证类型": "无验证",
-                            "区域": "境内",
-                            "浏览器版本": "140.0.7339.128",
-                            "登陆类型": "其他",
-                            "登陆网址": "https://default.com",
-                            "JIRA工单": "RPA-0001"
-                        }, ensure_ascii=False)
-    # 全局唯一实例
-    client: ZhipuAiClient = _init_client()
+    """可选 LLM 抽取。审批台主路径不调用本函数，enabled=false 时不请求模型。"""
+    defaults = {
+        "系统版本": "Microsoft Windows Server 2019 Standard",
+        "浏览器": "Google",
+        "场景": "网银",
+        "验证类型": "无验证",
+        "区域": "其他",
+        "浏览器版本": "",
+        "登陆类型": "其他",
+        "登陆网址": "",
+        "JIRA工单": "",
+    }
+    if isinstance(base_info, dict):
+        defaults.update(base_info)
+    if not _llm_enabled():
+        logger.info("LLM 未启用，跳过 remark 抽取")
+        return json.dumps(defaults, ensure_ascii=False)
+
+    client = _init_client()
     # base_info =
     #         {
     #             "系统版本": "Windows10",
