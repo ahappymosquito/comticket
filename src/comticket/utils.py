@@ -6,7 +6,6 @@ import tomllib  # Python 3.11+
 import pickle
 from loguru import logger
 from datetime import datetime
-from zai import ZhipuAiClient
 import time
 from pathlib import Path
 
@@ -147,8 +146,13 @@ def send_Email(to: list, subject:str ,body:str,html = '' ,sender_name="徐文超
 
 
 # =========llm========
-def _init_client() -> ZhipuAiClient:
-    """实例化全局 ZhipuAiClient"""
+def _init_client():
+    """实例化 ZhipuAiClient。仅在 [llm].enabled=true 时调用。"""
+    try:
+        from zai import ZhipuAiClient
+    except ImportError as exc:
+        raise RuntimeError("启用 LLM 需要安装 zai-sdk") from exc
+
     config = load_config()
     token = config.get("llm", {}).get("token")
     if not token:
@@ -183,7 +187,7 @@ def llm(remark, base_info):
         logger.info("LLM 未启用，跳过 remark 抽取")
         return json.dumps(defaults, ensure_ascii=False)
 
-    client: ZhipuAiClient = _init_client()
+    client = _init_client()
     # base_info =
     #         {
     #             "系统版本": "Windows10",
